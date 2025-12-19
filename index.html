@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Endevina qui sóc?</title>
+    <style>
+        :root {
+            --color-verde: #4caf50;
+            --color-rojo: #f44336;
+            --color-negro: #333;
+            --color-gris: #ccc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .fondo {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover;
+            background-position: center;
+            filter: blur(5px) brightness(0.6);
+            z-index: -1;
+            transform: scale(1.1);
+        }
+
+        h1 {
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+            text-align: center;
+            margin: 15px 0;
+            font-size: 1.8rem;
+        }
+
+        #contenedor-juego {
+            background: rgba(255, 255, 255, 0.92);
+            padding: 15px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 95%;
+            max-width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #contador {
+            text-align: center;
+            font-weight: bold;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .fila {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .celda {
+            width: 42px;
+            height: 42px;
+            border: 2px solid var(--color-gris);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.4rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 8px;
+            background: white;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .controles {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        input {
+            padding: 15px;
+            font-size: 1.2rem;
+            text-align: center;
+            text-transform: uppercase;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            outline: none;
+        }
+
+        #btnEnviar {
+            padding: 15px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #btnEnviar:disabled { background-color: #ccc; color: #666; cursor: not-allowed; }
+
+        #btnPista {
+            display: none;
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #mensajePista {
+            color: #e67e22;
+            font-weight: bold;
+            text-align: center;
+            font-size: 0.9rem;
+            min-height: 1.2rem;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 100;
+        }
+
+        #modal {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            width: 85%;
+            max-width: 320px;
+            text-align: center;
+            z-index: 101;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        #modal img { width: 100%; border-radius: 15px; margin: 15px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <div class="fondo" id="capaFondo"></div>
+
+    <h1>Endevina qui sóc?</h1>
+    
+    <div id="contenedor-juego">
+        <div id="contador">Intents: 0 / 8</div>
+        <div id="historial"></div>
+
+        <div class="controles">
+            <input type="text" id="inputNombre" placeholder="Escriu el nom aquí..." autocomplete="off">
+            <button id="btnEnviar" onclick="hacerIntento()">Enviar Intent</button>
+            <button id="btnPista" onclick="darPista()">💡 Veure pista</button>
+            <div id="mensajePista"></div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div id="modal">
+        <h2 id="resultadoTitulo" style="color:#333; margin-top:0;"></h2>
+        <img src="" id="fotoPerroFinal" alt="Foto del perro">
+        <p id="infoPerro" style="color:#555; line-height: 1.4;"></p>
+        <button onclick="reiniciarJuego()" style="width:100%; padding:12px; background:var(--color-verde); color:white; border:none; border-radius:10px; font-weight:bold; font-size:1rem; cursor:pointer;">Tornar a jugar</button>
+    </div>
+
+    <script>
+        // --- BASE DE DADES DE GOSSOS ---
+        const LLISTA_GOSSOS = [
+            {
+                nom: "BRUCE",
+                foto_fons: "https://adamprotectora.org/imas/animales/_1331/a_13311744231020.jpg",
+                foto_final: "https://adamprotectora.org/imas/animales/_1331/a_13311741456299.jpg",
+                info: `El Bruce és un encant de gos que està en adopció a la protectora ADAM del Masnou, té 3 anys i tot el que té de gran ho té de bo. Li agrada molt el contacte amb la gent. Està cercant una família, seràs tu?
+Si vols saber més sobre el Bruce i venir a conèixer, contacta amb nosaltres trucant al 650 796 050`
+            },
+            {
+                nom: "SAMBA",
+                foto_fons: "https://adamprotectora.org/imas/animales/_1350/a_13501761926345.jpg",
+                foto_final: "https://adamprotectora.org/imas/animales/_1350/a_13501761926347.jpg",
+                info: `La Samba va ser trobada a la porta de la protectora ADAM del Masnou. És una gossa jove d’uns 9 mesos, plena d’energia i amb moltes ganes de viure i aprendre. Encara es troba en procés d’aprenentatge, no ha tingut l’oportunitat que l’ensenyin a passejar correctament i reacciona davant d’altres gossos. Tot i això, amb dedicació, paciència i treball constant, la Samba demostra cada dia la seva gran capacitat per avançar i confiar.
+Està cercant una família, seràs tu?
+Si vols saber més sobre la Samba i venir a conèixer-la, contacta amb nosaltres trucant al 650 796 050`
+            },
+            {
+                nom: "GRIMM",
+                foto_fons: "https://adamprotectora.org/imas/animales/_1286/a_12861704711534.jpg",
+                foto_final: "https://adamprotectora.org/imas/animales/_1286/a_12861704711534.jpg",
+                info: `El Grimm és un gos jove que està a la protectora ADAM del Masnou, té quasi 3 anys. És actiu, li encanta jugar, fer bones passejades i que li facin molts mimos. Només li falta la pau i la tranquil·litat d'una casa, a la protectora passa molts nervis.
+Està cercant una família, seràs tu?
+Si vols saber més sobre el Grimm i venir a conèixer, contacta amb nosaltres trucant al 650 796 050`
+            },
+            {
+                nom: "COVA",
+                foto_fons: "https://adamprotectora.org/imas/animales/_1289/a_12891744230687.jpg",
+                foto_final: "https://adamprotectora.org/imas/animales/_1289/a_12891731659512.jpg",
+                info: `La Cova és una gosseta de 3 anys, amb una vitalitat contagiosa. Sempre està a punt per jugar i explorar el món al seu voltant. És una exploradora nata! Ideal per als qui gaudeixen de la natura i les caminades.
+A més, hem pogut corroborar, a casa una voluntària, que és una companya lleial, molt amorosa i tranquil·la. Busca constantment rebre mimos i et demostra el seu afecte amb moltes llepades.
+ADOPTADA!!!!!`
+            },
+            {
+                nom: "ITZA",
+                foto_fons: "https://adamprotectora.org/imas/animales/_1336/a_13361741728803.jpg",
+                foto_final: "https://adamprotectora.org/imas/animales/_1336/a_13361741728807.jpg",
+                info: `Aquesta preciositat de 9 anys es diu Itza i està a la protectora ADAM del Masnou. És molt sociable amb les persones, un plaer passejar-la ja que va molt tranquil·la. Li encanta que l'acaronin i jugar al nostre pati i, de tant en tant, fer-se unes bones carreres.
+Cerquem per a ella una família amb experiència, que no tingui altres animals a casa.
+Està cercant una família, seràs tu?
+Si vols saber més sobre la Itza i venir a conèixer-la, contacta amb nosaltres trucant al 650 796 050.`
+            },
+            {
+                nom: "GREY",
+                foto_fons: "https://adamprotectora.org/imas/animales/_1263/a_12631673199107.jpg",
+                foto_final: "https://adamprotectora.org/imas/animales/_1263/a_12631672672120.jpg",
+                info: `El Grey té quasi 13 anys va arribar a nosaltres a través dels Serveis Socials de l'Ajuntament de Masnou, procedent d'una família que no podia continuar-ho tenint.
+Grey és un gosset obedient, bo, simpàtic, afectuós, i casolà.
+Com que no està molt bé de salud, actualment està en una casa d’acollida`
+            }
+        ];
+
+
+        let gosActual;
+        let intentosRealizados = 0;
+        let juegoTerminado = false;
+        let pistasUsadas = 0;
+
+        const input = document.getElementById('inputNombre');
+        const btnEnviar = document.getElementById('btnEnviar');
+        const historial = document.getElementById('historial');
+        const contadorTxt = document.getElementById('contador');
+        const btnPista = document.getElementById('btnPista');
+        const fotoFinalImg = document.getElementById('fotoPerroFinal');
+        const capaFondo = document.getElementById('capaFondo');
+
+        // Selecció aleatòria sense repetir l'anterior
+        function seleccionarGos() {
+            const ultimIndex = localStorage.getItem('ultimGosIndex');
+            let nouIndex;
+            
+            do {
+                nouIndex = Math.floor(Math.random() * LLISTA_GOSSOS.length);
+            } while (nouIndex == ultimIndex && LLISTA_GOSSOS.length > 1);
+            
+            localStorage.setItem('ultimGosIndex', nouIndex);
+            gosActual = LLISTA_GOSSOS[nouIndex];
+            
+            // Aplicar configuració del gos seleccionat
+            capaFondo.style.backgroundImage = `url('${gosActual.foto_fons}')`;
+            input.maxLength = gosActual.nom.length;
+        }
+
+        function hacerIntento() {
+            if (juegoTerminado) return;
+            const intento = input.value.toUpperCase().trim();
+            
+            if (intento.length !== gosActual.nom.length) {
+                alert(`El nom ha de tenir ${gosActual.nom.length} lletres`);
+                return;
+            }
+
+            intentosRealizados++;
+            contadorTxt.innerText = `Intents: ${intentosRealizados} / 8`;
+
+            const resultadoColores = procesarWordle(intento, gosActual.nom);
+            mostrarFila(intento, resultadoColores);
+
+            input.value = "";
+            input.focus();
+
+            if (!juegoTerminado) {
+                if (intentosRealizados === 3 && pistasUsadas === 0) {
+                    btnPista.style.display = "block";
+                    btnPista.innerText = "💡 Veure primera lletra";
+                } else if (intentosRealizados === 6 && pistasUsadas === 1) {
+                    btnPista.style.display = "block";
+                    btnPista.innerText = "💡 Veure segona lletra";
+                }
+            }
+
+            if (intento === gosActual.nom) {
+                finalizar(true);
+            } else if (intentosRealizados >= 8) {
+                finalizar(false);
+            }
+        }
+
+        function procesarWordle(intento, solucion) {
+            let res = Array(solucion.length).fill("var(--color-negro)");
+            let solArr = solucion.split("");
+            let intArr = intento.split("");
+            let conteo = {};
+            for (let l of solArr) { conteo[l] = (conteo[l] || 0) + 1; }
+            for (let i = 0; i < solArr.length; i++) {
+                if (intArr[i] === solArr[i]) {
+                    res[i] = "var(--color-verde)";
+                    conteo[intArr[i]]--;
+                }
+            }
+            for (let i = 0; i < solArr.length; i++) {
+                if (res[i] === "var(--color-negro)" && conteo[intArr[i]] > 0) {
+                    res[i] = "var(--color-rojo)";
+                    conteo[intArr[i]]--;
+                }
+            }
+            return res;
+        }
+
+        function mostrarFila(intento, colores) {
+            const fila = document.createElement('div');
+            fila.className = 'fila';
+            intento.split("").forEach((letra, i) => {
+                const celda = document.createElement('div');
+                celda.className = 'celda';
+                celda.innerText = letra;
+                celda.style.backgroundColor = colores[i];
+                celda.style.borderColor = colores[i];
+                fila.appendChild(celda);
+            });
+            historial.appendChild(fila);
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        function darPista() {
+            if (pistasUsadas === 0) {
+                document.getElementById('mensajePista').innerText = `La primera lletra es "${gosActual.nom[0]}"`;
+                pistasUsadas = 1;
+            } else {
+                document.getElementById('mensajePista').innerText = `La segona lletra es "${gosActual.nom[1]}"`;
+                pistasUsadas = 2;
+            }
+            btnPista.style.display = "none";
+        }
+
+        function finalizar(ganado) {
+            juegoTerminado = true;
+            input.disabled = true;
+            btnEnviar.disabled = true;
+            btnPista.style.display = "none";
+
+            setTimeout(() => {
+                document.getElementById('overlay').style.display = "block";
+                document.getElementById('modal').style.display = "block";
+                const titulo = document.getElementById('resultadoTitulo');
+                const info = document.getElementById('infoPerro');
+
+                if (ganado) {
+                    titulo.innerText = "Perfecte! Ho has encertat! Sóc en " + gosActual.nom;
+                    info.innerText = gosActual.info;
+                    fotoFinalImg.src = gosActual.foto_final;
+                } else {
+                    titulo.innerText = "¡OooooH! S'han acabat els intents";
+                    info.innerText = "El nom era " + gosActual.nom + ". Prova un altre cop per saber qui sóc i conéixer la meva història!";
+                    fotoFinalImg.src = gosActual.foto_final; 
+                }
+            }, 600);
+        }
+
+        function reiniciarJuego() {
+            location.reload();
+        }
+
+        input.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") { e.preventDefault(); hacerIntento(); }
+        });
+
+        // Iniciar joc
+        seleccionarGos();
+    </script>
+</body>
+</html>
