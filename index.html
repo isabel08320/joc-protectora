@@ -141,20 +141,25 @@
         }
 
         #modal {
-            display: none;
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 25px;
-            border-radius: 20px;
-            width: 85%;
-            max-width: 320px;
-            text-align: center;
-            z-index: 101;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    width: 85%;
+    max-width: 320px;
+    text-align: center;
+    z-index: 101;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 
+    /* --- ESTAS LÍNEAS ACTIVAN EL SCROLL --- */
+    max-height: 85vh;           /* No permite que el modal sea más alto que el 85% de la pantalla */
+    overflow-y: auto;           /* Activa la barra de desplazamiento si el contenido sobra */
+    box-sizing: border-box;     /* Asegura que el padding no rompa el diseño */
+    -webkit-overflow-scrolling: touch; /* Suaviza el scroll en iPhones antiguos */
+}
         #modal img { width: 100%; border-radius: 15px; margin: 15px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     </style>
 </head>
@@ -363,7 +368,7 @@ Com que no està molt bé de salud, actualment està en una casa d’acollida`
                 const info = document.getElementById('infoPerro');
 
                 if (ganado) {
-                    titulo.innerText = "Perfecte! Ho has encertat! Sóc en " + gosActual.nom;
+                    titulo.innerText = "Perfecte! Ho has encertat! Em dic  " + gosActual.nom;
                     info.innerText = gosActual.info;
                     fotoFinalImg.src = gosActual.foto_final;
                 } else {
